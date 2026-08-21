@@ -151,4 +151,8 @@
 - [x] Enhance the comparison-sharing audit date controls with an explicit custom-range selection affordance while preserving quick presets.
 - [x] Defer production-only monthly published-comparison review activation at the user’s request to keep the website unpublished.
 - [x] Validate the refined audit discovery and date workflows with TypeScript, tests, production build, and desktop/mobile responsive checks.
-- [ ] Push the validated audit discovery and custom date-range update source tree to the public GitHub repository while keeping the website unpublished.
+- [x] Push the validated audit discovery and custom date-range update source tree to the public GitHub repository while keeping the website unpublished.
+- [x] Add date filtering to the administrator comparison-sharing CSV download history panel.
+- [x] Add administrator-managed retention rules and scheduled cleanup for completed comparison-sharing CSV export records and files.
+- [x] Validate history filtering, retention ownership, scheduled cleanup idempotency, TypeScript, tests, build, and responsive behavior, then save a production-ready checkpoint.
+- [ ] Publish the latest checkpoint and activate the monthly published-comparison review schedule in production.

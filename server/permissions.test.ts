@@ -131,6 +131,9 @@ describe("Educonnect authorization contract", () => {
     await expect(caller.workspace.updateMonthlyCertificateAuditReportSchedule({ enabled: true, recipientIds: [1] })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.workspace.monthlyComparisonReviewSchedule()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.workspace.updateMonthlyComparisonReviewSchedule({ enabled: true, recipientIds: [1], expiryWarningDays: 14 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.workspace.comparisonSharingExportRetention()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.workspace.updateComparisonSharingExportRetention({ enabled: true, retentionDays: 90 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.workspace.comparisonSharingExportRetentionRuns()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.workspace.adminInterventionComparisonViews()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.workspace.createAdminInterventionComparisonView({ name: "Support cohort", normalized: true })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.workspace.deleteAdminInterventionComparisonView({ viewId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -153,6 +156,11 @@ describe("Educonnect authorization contract", () => {
   it("rejects an inverted trend export history date range before it reaches the database", async () => {
     const caller = appRouter.createCaller(studentContext());
     await expect(caller.workspace.studentTrendExportHistory({ startAt: new Date("2026-08-19T00:00:00Z"), endAt: new Date("2026-08-18T23:59:59Z") })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("rejects an inverted comparison-sharing export history date range before it reaches the database", async () => {
+    const caller = appRouter.createCaller(studentContext());
+    await expect(caller.workspace.adminComparisonSharingAuditExports({ startAt: new Date("2026-08-19T00:00:00Z"), endAt: new Date("2026-08-18T23:59:59Z") })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("rejects unsupported student trend ranges before it reaches the database", async () => {

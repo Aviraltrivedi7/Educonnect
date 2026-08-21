@@ -168,6 +168,38 @@ export const monthlyComparisonReviewSchedules = mysqlTable(
   table => [uniqueIndex("monthly_comparison_review_school_unq").on(table.schoolId), index("monthly_comparison_review_task_idx").on(table.scheduleCronTaskUid)],
 );
 
+export const comparisonSharingExportRetentionPolicies = mysqlTable(
+  "comparisonSharingExportRetentionPolicies",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    schoolId: int("schoolId").notNull().references(() => schools.id),
+    configuredBy: int("configuredBy").notNull().references(() => users.id),
+    retentionDays: int("retentionDays").notNull().default(90),
+    enabled: boolean("enabled").notNull().default(false),
+    scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    lastCleanedAt: timestamp("lastCleanedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("comparison_export_retention_school_unq").on(table.schoolId), index("comparison_export_retention_task_idx").on(table.scheduleCronTaskUid)],
+);
+
+export const comparisonSharingExportRetentionRuns = mysqlTable(
+  "comparisonSharingExportRetentionRuns",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    policyId: int("policyId").notNull().references(() => comparisonSharingExportRetentionPolicies.id),
+    schoolId: int("schoolId").notNull().references(() => schools.id),
+    taskUid: varchar("taskUid", { length: 65 }).notNull(),
+    status: varchar("status", { length: 16 }).notNull(),
+    deletedCount: int("deletedCount").notNull().default(0),
+    details: json("details"),
+    startedAt: timestamp("startedAt").defaultNow().notNull(),
+    completedAt: timestamp("completedAt"),
+  },
+  table => [index("comparison_export_retention_run_school_idx").on(table.schoolId, table.startedAt), index("comparison_export_retention_run_policy_idx").on(table.policyId, table.startedAt)],
+);
+
 export const trendExportDownloads = mysqlTable(
   "trendExportDownloads",
   {

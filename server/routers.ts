@@ -121,6 +121,9 @@ import {
   createAdminComparisonSharingAuditExport,
   listAdminComparisonSharingAuditExports,
   setAdminComparisonSharingAuditExportArchived,
+  getComparisonSharingExportRetentionPolicy,
+  updateComparisonSharingExportRetentionPolicy,
+  listComparisonSharingExportRetentionRuns,
 } from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -226,8 +229,11 @@ export const appRouter = router({
     adminComparisonSharingActivity: adminProcedure.input(z.object({ ownerId: z.number().int().positive().optional(), action: z.enum(["shared", "revoked", "auto_revoked"]).optional(), startAt: z.date().optional(), endAt: z.date().optional() }).refine(input => !input.startAt || !input.endAt || input.startAt <= input.endAt, { message: "Start date must be before end date." }).optional()).query(({ ctx, input }) => listAdminComparisonSharingActivity(ctx.user.id, input)),
     adminComparisonSharingAuditSummary: adminProcedure.input(z.object({ ownerId: z.number().int().positive().optional(), action: z.enum(["shared", "revoked", "auto_revoked"]).optional(), startAt: z.date().optional(), endAt: z.date().optional() }).refine(input => !input.startAt || !input.endAt || input.startAt <= input.endAt, { message: "Start date must be before end date." }).optional()).query(({ ctx, input }) => getAdminComparisonSharingAuditSummary(ctx.user.id, input)),
     exportAdminComparisonSharingAudit: adminProcedure.input(z.object({ ownerId: z.number().int().positive().optional(), action: z.enum(["shared", "revoked", "auto_revoked"]).optional(), startAt: z.date().optional(), endAt: z.date().optional() }).refine(input => !input.startAt || !input.endAt || input.startAt <= input.endAt, { message: "Start date must be before end date." }).optional()).mutation(({ ctx, input }) => createAdminComparisonSharingAuditExport(ctx.user.id, input)),
-    adminComparisonSharingAuditExports: adminProcedure.input(z.object({ archived: z.boolean().optional() }).optional()).query(({ ctx, input }) => listAdminComparisonSharingAuditExports(ctx.user.id, input?.archived ?? false)),
+    adminComparisonSharingAuditExports: adminProcedure.input(z.object({ archived: z.boolean().optional(), status: z.enum(["queued", "ready", "failed"]).optional(), startAt: z.date().optional(), endAt: z.date().optional() }).refine(input => !input.startAt || !input.endAt || input.startAt <= input.endAt, { message: "Start date must be before end date." }).optional()).query(({ ctx, input }) => listAdminComparisonSharingAuditExports(ctx.user.id, input)),
     setAdminComparisonSharingAuditExportArchived: adminProcedure.input(z.object({ exportId: z.number().int().positive(), archived: z.boolean() })).mutation(({ ctx, input }) => setAdminComparisonSharingAuditExportArchived(ctx.user.id, input.exportId, input.archived)),
+    comparisonSharingExportRetention: adminProcedure.query(({ ctx }) => getComparisonSharingExportRetentionPolicy(ctx.user.id)),
+    updateComparisonSharingExportRetention: adminProcedure.input(z.object({ enabled: z.boolean(), retentionDays: z.union([z.literal(30), z.literal(60), z.literal(90), z.literal(180), z.literal(365)]) })).mutation(({ ctx, input }) => updateComparisonSharingExportRetentionPolicy(ctx.user.id, input, parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "")),
+    comparisonSharingExportRetentionRuns: adminProcedure.query(({ ctx }) => listComparisonSharingExportRetentionRuns(ctx.user.id)),
     monthlyCertificateAuditReportSchedule: adminProcedure.query(({ ctx }) => getMonthlyCertificateAuditReportSchedule(ctx.user.id)),
     updateMonthlyCertificateAuditReportSchedule: adminProcedure.input(z.object({ enabled: z.boolean(), recipientIds: z.array(z.number().int().positive()).max(100) })).mutation(({ ctx, input }) => updateMonthlyCertificateAuditReportSchedule(ctx.user.id, input, parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "")),
     monthlyComparisonReviewSchedule: adminProcedure.query(({ ctx }) => getMonthlyComparisonReviewSchedule(ctx.user.id)),

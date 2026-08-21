@@ -9,6 +9,8 @@ import {
   assignments,
   auditLogs,
   backupJobs,
+  comparisonSharingExportRetentionPolicies,
+  comparisonSharingExportRetentionRuns,
   conversationParticipants,
   conversations,
   courseModules,
@@ -1913,13 +1915,15 @@ function isComparisonSharingAuditExport(row: typeof reportExports.$inferSelect) 
   return row.type === "system" && row.filterSnapshot?.report === "comparison_sharing_activity";
 }
 
-export async function listAdminComparisonSharingAuditExports(userId: number, archived = false) {
+type ComparisonSharingAuditExportHistoryFilters = { archived?: boolean; status?: "queued" | "ready" | "failed"; startAt?: Date; endAt?: Date };
+
+export async function listAdminComparisonSharingAuditExports(userId: number, filters: ComparisonSharingAuditExportHistoryFilters = {}) {
   const db = requireDb(await getDb());
   const profile = await getWorkspace(userId);
   if (profile.user.role !== "admin" || !profile.user.schoolId) throw new Error("Only administrators can review comparison sharing exports.");
   const adminIds = (await db.select({ id: users.id }).from(users).where(and(eq(users.schoolId, profile.user.schoolId), eq(users.role, "admin")))).map(row => row.id);
   if (!adminIds.length) return [];
-  const rows = await db.select({ report: reportExports, requestedByName: users.name, requestedByEmail: users.email }).from(reportExports).innerJoin(users, eq(users.id, reportExports.requestedBy)).where(and(inArray(reportExports.requestedBy, adminIds), eq(reportExports.type, "system"), archived ? isNotNull(reportExports.archivedAt) : isNull(reportExports.archivedAt))).orderBy(desc(reportExports.createdAt)).limit(60);
+  const rows = await db.select({ report: reportExports, requestedByName: users.name, requestedByEmail: users.email }).from(reportExports).innerJoin(users, eq(users.id, reportExports.requestedBy)).where(and(inArray(reportExports.requestedBy, adminIds), eq(reportExports.type, "system"), filters.archived ? isNotNull(reportExports.archivedAt) : isNull(reportExports.archivedAt), filters.status ? eq(reportExports.status, filters.status) : undefined, filters.startAt ? gte(reportExports.createdAt, filters.startAt) : undefined, filters.endAt ? lte(reportExports.createdAt, filters.endAt) : undefined)).orderBy(desc(reportExports.createdAt)).limit(60);
   return rows.filter(({ report }) => isComparisonSharingAuditExport(report)).map(({ report, requestedByName, requestedByEmail }) => ({ id: report.id, status: report.status, createdAt: report.createdAt, archivedAt: report.archivedAt, requestedBy: { name: requestedByName, email: requestedByEmail }, eventFilter: typeof report.filterSnapshot?.action === "string" ? report.filterSnapshot.action : "all", startAt: typeof report.filterSnapshot?.startAt === "string" ? report.filterSnapshot.startAt : null, endAt: typeof report.filterSnapshot?.endAt === "string" ? report.filterSnapshot.endAt : null, url: report.status === "ready" && report.storageKey ? `/manus-storage/${report.storageKey}` : null }));
 }
 
@@ -1933,4 +1937,67 @@ export async function setAdminComparisonSharingAuditExportArchived(userId: numbe
   await db.update(reportExports).set({ archivedAt }).where(eq(reportExports.id, exportId));
   await audit(userId, profile.user.schoolId, archived ? "admin.comparison-sharing-audit.export-archived" : "admin.comparison-sharing-audit.export-restored", "reportExport", String(exportId), { requestedBy: found.report.requestedBy });
   return { id: exportId, archivedAt };
+}
+
+type ComparisonSharingExportRetentionInput = { enabled: boolean; retentionDays: 30 | 60 | 90 | 180 | 365 };
+
+async function ensureComparisonSharingExportRetentionPolicy(userId: number) {
+  const db = requireDb(await getDb());
+  const profile = await getWorkspace(userId);
+  if (profile.user.role !== "admin" || !profile.user.schoolId) throw new Error("Only administrators can manage comparison sharing export retention.");
+  await db.insert(comparisonSharingExportRetentionPolicies).values({ schoolId: profile.user.schoolId, configuredBy: userId }).onDuplicateKeyUpdate({ set: { configuredBy: userId } });
+  return (await db.select().from(comparisonSharingExportRetentionPolicies).where(eq(comparisonSharingExportRetentionPolicies.schoolId, profile.user.schoolId)).limit(1))[0]!;
+}
+
+export async function getComparisonSharingExportRetentionPolicy(userId: number) {
+  return ensureComparisonSharingExportRetentionPolicy(userId);
+}
+
+export async function updateComparisonSharingExportRetentionPolicy(userId: number, input: ComparisonSharingExportRetentionInput, sessionToken: string) {
+  const db = requireDb(await getDb());
+  const profile = await getWorkspace(userId);
+  if (profile.user.role !== "admin" || !profile.user.schoolId) throw new Error("Only administrators can manage comparison sharing export retention.");
+  const current = await ensureComparisonSharingExportRetentionPolicy(userId);
+  if (input.enabled && process.env.NODE_ENV !== "production") throw new Error("Publish the latest Educonnect release before activating scheduled CSV retention.");
+  let scheduleCronTaskUid = current.scheduleCronTaskUid;
+  if (input.enabled) {
+    const job = { cron: "0 0 4 * * *", path: "/api/scheduled/comparison-sharing-export-retention", payload: {}, description: `Educonnect comparison-sharing CSV retention for school ${profile.user.schoolId}; releases report references after ${input.retentionDays} days` };
+    const schedule = scheduleCronTaskUid ? await updateHeartbeatJob(scheduleCronTaskUid, { ...job, enable: true }, sessionToken) : await createHeartbeatJob({ name: `educonnect-comparison-export-retention-${profile.user.schoolId}`, ...job }, sessionToken);
+    if (!scheduleCronTaskUid) scheduleCronTaskUid = (schedule as { taskUid: string }).taskUid;
+  } else if (scheduleCronTaskUid) await updateHeartbeatJob(scheduleCronTaskUid, { enable: false }, sessionToken);
+  await db.update(comparisonSharingExportRetentionPolicies).set({ configuredBy: userId, enabled: input.enabled, retentionDays: input.retentionDays, scheduleCronTaskUid }).where(eq(comparisonSharingExportRetentionPolicies.id, current.id));
+  await audit(userId, profile.user.schoolId, "admin.comparison-sharing-export-retention.updated", "comparisonSharingExportRetentionPolicy", String(current.id), { enabled: input.enabled, retentionDays: input.retentionDays });
+  return getComparisonSharingExportRetentionPolicy(userId);
+}
+
+export async function cleanupExpiredComparisonSharingAuditExports(taskUid: string) {
+  const db = requireDb(await getDb());
+  const policy = (await db.select().from(comparisonSharingExportRetentionPolicies).where(eq(comparisonSharingExportRetentionPolicies.scheduleCronTaskUid, taskUid)).limit(1))[0];
+  if (!policy) return { ok: true, skipped: "orphan" as const };
+  if (!policy.enabled) return { ok: true, skipped: "disabled" as const };
+  const startedAt = new Date();
+  const inserted = await db.insert(comparisonSharingExportRetentionRuns).values({ policyId: policy.id, schoolId: policy.schoolId, taskUid, status: "running", startedAt });
+  const runId = Number(inserted[0].insertId);
+  try {
+    const cutoff = new Date(Date.now() - policy.retentionDays * 86_400_000);
+    const adminIds = (await db.select({ id: users.id }).from(users).where(and(eq(users.schoolId, policy.schoolId), eq(users.role, "admin")))).map(row => row.id);
+    const candidates = adminIds.length ? await db.select({ report: reportExports }).from(reportExports).where(and(inArray(reportExports.requestedBy, adminIds), eq(reportExports.type, "system"), eq(reportExports.status, "ready"), lt(reportExports.createdAt, cutoff))) : [];
+    const expiredIds = candidates.map(row => row.report).filter(isComparisonSharingAuditExport).map(report => report.id);
+    if (expiredIds.length) await db.delete(reportExports).where(inArray(reportExports.id, expiredIds));
+    const completedAt = new Date();
+    await db.update(comparisonSharingExportRetentionRuns).set({ status: "completed", deletedCount: expiredIds.length, details: { retentionDays: policy.retentionDays, cutoff: cutoff.toISOString(), release: "database report records and storage key references" }, completedAt }).where(eq(comparisonSharingExportRetentionRuns.id, runId));
+    await db.update(comparisonSharingExportRetentionPolicies).set({ lastCleanedAt: completedAt }).where(eq(comparisonSharingExportRetentionPolicies.id, policy.id));
+    await audit(null, policy.schoolId, "admin.comparison-sharing-export-retention.cleaned", "comparisonSharingExportRetentionPolicy", String(policy.id), { taskUid, deletedCount: expiredIds.length, retentionDays: policy.retentionDays, runId });
+    return { ok: true, deletedCount: expiredIds.length, runId };
+  } catch (error) {
+    await db.update(comparisonSharingExportRetentionRuns).set({ status: "failed", details: { message: error instanceof Error ? error.message : String(error) }, completedAt: new Date() }).where(eq(comparisonSharingExportRetentionRuns.id, runId));
+    throw error;
+  }
+}
+
+export async function listComparisonSharingExportRetentionRuns(userId: number) {
+  const db = requireDb(await getDb());
+  const profile = await getWorkspace(userId);
+  if (profile.user.role !== "admin" || !profile.user.schoolId) throw new Error("Only administrators can review comparison sharing export retention runs.");
+  return db.select().from(comparisonSharingExportRetentionRuns).where(eq(comparisonSharingExportRetentionRuns.schoolId, profile.user.schoolId)).orderBy(desc(comparisonSharingExportRetentionRuns.startedAt)).limit(30);
 }

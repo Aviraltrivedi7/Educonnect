@@ -8,7 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { registerEduconnectUploadRoutes } from "../uploads";
-import { handleScheduledLearningReminder, handleScheduledMonthlyCertificateAudit, handleScheduledMonthlyComparisonReview, handleScheduledTrendExportRetention } from "../reminders";
+import { handleScheduledComparisonSharingExportRetention, handleScheduledLearningReminder, handleScheduledMonthlyCertificateAudit, handleScheduledMonthlyComparisonReview, handleScheduledTrendExportRetention } from "../reminders";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -41,6 +41,7 @@ async function startServer() {
   registerEduconnectUploadRoutes(app);
   app.post("/api/scheduled/learning-reminder", handleScheduledLearningReminder);
   app.post("/api/scheduled/trend-export-retention", handleScheduledTrendExportRetention);
+  app.post("/api/scheduled/comparison-sharing-export-retention", handleScheduledComparisonSharingExportRetention);
   app.post("/api/scheduled/monthly-certificate-audit", handleScheduledMonthlyCertificateAudit);
   app.post("/api/scheduled/monthly-comparison-review", handleScheduledMonthlyComparisonReview);
   // tRPC API

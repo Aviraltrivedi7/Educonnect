@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { and, eq, or } from "drizzle-orm";
-import { adminInterventionComparisonViews, auditLogs, monthlyComparisonReviewSchedules, notificationPreferences, notifications, reportExports, schools, teacherReminderTemplates, users } from "../drizzle/schema";
-import { createAdminComparisonSharingAuditExport, deliverScheduledMonthlyComparisonReview, getAdminComparisonSharingAuditSummary, getDb, listAdminComparisonSharingAuditExports, setAdminComparisonSharingAuditExportArchived } from "./db";
+import { adminInterventionComparisonViews, auditLogs, comparisonSharingExportRetentionPolicies, comparisonSharingExportRetentionRuns, monthlyComparisonReviewSchedules, notificationPreferences, notifications, reportExports, schools, teacherReminderTemplates, users } from "../drizzle/schema";
+import { cleanupExpiredComparisonSharingAuditExports, createAdminComparisonSharingAuditExport, deliverScheduledMonthlyComparisonReview, getAdminComparisonSharingAuditSummary, getDb, listAdminComparisonSharingAuditExports, setAdminComparisonSharingAuditExportArchived } from "./db";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -33,11 +33,13 @@ describe("administrator acceptance workflow with real persisted data", () => {
     await db.delete(notifications).where(or(eq(notifications.recipientId, teacherId), eq(notifications.createdBy, adminId)));
     await db.delete(notificationPreferences).where(eq(notificationPreferences.userId, teacherId));
     await db.delete(notificationPreferences).where(eq(notificationPreferences.userId, adminId));
-    await db.delete(auditLogs).where(eq(auditLogs.schoolId, schoolId));
     await db.delete(reportExports).where(eq(reportExports.requestedBy, adminId));
+    await db.delete(comparisonSharingExportRetentionRuns).where(eq(comparisonSharingExportRetentionRuns.schoolId, schoolId));
+    await db.delete(comparisonSharingExportRetentionPolicies).where(eq(comparisonSharingExportRetentionPolicies.schoolId, schoolId));
     await db.delete(monthlyComparisonReviewSchedules).where(eq(monthlyComparisonReviewSchedules.schoolId, schoolId));
     await db.delete(teacherReminderTemplates).where(eq(teacherReminderTemplates.schoolId, schoolId));
     await db.delete(adminInterventionComparisonViews).where(eq(adminInterventionComparisonViews.schoolId, schoolId));
+    await db.delete(auditLogs).where(eq(auditLogs.schoolId, schoolId));
     await db.delete(users).where(or(eq(users.id, teacherId), eq(users.id, adminId)));
     await db.delete(schools).where(eq(schools.id, schoolId));
   });
@@ -98,10 +100,20 @@ describe("administrator acceptance workflow with real persisted data", () => {
     const exportRow = (await db.select().from(reportExports).where(eq(reportExports.id, csvExport.id)).limit(1))[0];
     expect(exportRow.status).toBe("ready");
     await expect(listAdminComparisonSharingAuditExports(adminId)).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ id: csvExport.id, status: "ready" })]));
+    await expect(listAdminComparisonSharingAuditExports(adminId, { startAt: new Date(Date.now() - 86_400_000), endAt: new Date(Date.now() + 86_400_000), status: "ready" })).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ id: csvExport.id })]));
     await expect(setAdminComparisonSharingAuditExportArchived(adminId, csvExport.id, true)).resolves.toMatchObject({ id: csvExport.id, archivedAt: expect.any(Date) });
-    await expect(listAdminComparisonSharingAuditExports(adminId, true)).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ id: csvExport.id })]));
+    await expect(listAdminComparisonSharingAuditExports(adminId, { archived: true })).resolves.toEqual(expect.arrayContaining([expect.objectContaining({ id: csvExport.id })]));
     await expect(setAdminComparisonSharingAuditExportArchived(adminId, csvExport.id, false)).resolves.toMatchObject({ id: csvExport.id, archivedAt: null });
+    const oldExportInsert = await db.insert(reportExports).values({ requestedBy: adminId, type: "system", filterSnapshot: { report: "comparison_sharing_activity", generatedAt: "acceptance" }, storageKey: `acceptance/${runKey}.csv`, status: "ready" });
+    const oldExportId = Number(oldExportInsert[0].insertId);
+    await db.update(reportExports).set({ createdAt: new Date(Date.now() - 91 * 86_400_000) }).where(eq(reportExports.id, oldExportId));
+    const retentionTaskUid = `${runKey}-comparison-export-retention`;
+    const policyInsert = await db.insert(comparisonSharingExportRetentionPolicies).values({ schoolId, configuredBy: adminId, enabled: true, retentionDays: 30, scheduleCronTaskUid: retentionTaskUid });
+    expect(await cleanupExpiredComparisonSharingAuditExports(retentionTaskUid)).toMatchObject({ ok: true, deletedCount: 1 });
+    expect((await db.select().from(reportExports).where(eq(reportExports.id, oldExportId)).limit(1)).length).toBe(0);
+    await expect(cleanupExpiredComparisonSharingAuditExports(retentionTaskUid)).resolves.toMatchObject({ ok: true, deletedCount: 0 });
+    expect(Number(policyInsert[0].insertId)).toBeGreaterThan(0);
     await expect(deliverScheduledMonthlyComparisonReview(taskUid)).resolves.toMatchObject({ ok: true, skipped: "already-reviewed" });
     expect(expiredShare.shareToken).toHaveLength(48);
-  });
+  }, 20_000);
 });
