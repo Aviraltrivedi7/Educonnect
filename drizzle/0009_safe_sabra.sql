@@ -1,0 +1,1 @@
+ALTER TABLE `notificationPreferences` ADD `reminderTimezone` varchar(64) DEFAULT 'UTC' NOT NULL;

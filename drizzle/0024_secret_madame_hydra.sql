@@ -1,0 +1,3 @@
+ALTER TABLE `reportExports` MODIFY COLUMN `type` enum('course','user','performance','system','intervention','certificate_revocation') NOT NULL;--> statement-breakpoint
+ALTER TABLE `adminInterventionComparisonViews` ADD `shareToken` varchar(96);--> statement-breakpoint
+ALTER TABLE `adminInterventionComparisonViews` ADD CONSTRAINT `adminInterventionComparisonViews_shareToken_unique` UNIQUE(`shareToken`);

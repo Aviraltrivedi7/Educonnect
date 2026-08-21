@@ -1,0 +1,149 @@
+# Educonnect Platform TODO
+
+- [x] Preserve the supplied archive and the earlier analysis report checkpoint as references.
+- [x] Upgrade the implementation workspace with database, server, and user authentication capabilities.
+- [x] Define and apply the core schema for identity, schools, learning, teaching, governance, backups, and auditable AI requests.
+- [x] Add typed protected procedures for workspace, courses, progress, assignments, mistakes, schedules, governance, and AI request records.
+- [x] Replace the analysis landing page with a secure Educonnect product entry and role-aware workspace shell.
+- [x] Complete profile onboarding and make school assignment accessible to every authorized administrator.
+- [x] Add course module, lesson, resource, quiz, conversation, notification, and exam authoring screens.
+- [x] Add course-detail viewing, lesson resume/completion controls, quiz attempts, assignment submission, and grading screens.
+- [x] Add teacher and administrator enrollment, publishing, role-management, report-export, backup-status, and notification screens.
+- [x] Wire an approved human-review workflow before exposing AI output to end users.
+- [x] Add validation tests for roles and protected workflow mutation boundaries.
+- [x] Add a production CI workflow, route-level code splitting, and file-upload/storage flows for real learning media.
+- [x] Verify TypeScript, tests, production build, empty/error states, protected entry states, and desktop/mobile navigation.
+- [x] Prepare the final stable checkpoint and document environment-specific follow-up.
+- [x] Audit the current release candidate for remaining unimplemented or queue-only operational workflows.
+- [x] Implement a concrete export generation and download lifecycle instead of request-only export records.
+- [x] Implement a governed backup execution lifecycle with auditable status transitions and recovery metadata.
+- [x] Complete invite revocation and staff-facing communication delivery-state controls.
+- [x] Surface durable learner assessment results and deep-link grade, assessment, and staff notification destinations.
+- [x] Expand automated coverage for protected teacher-only operations and role-boundary failure paths.
+- [x] Run and document explicit accessibility checks, reduce the remaining oversized production bundle, and prepare the final stable checkpoint.
+- [x] Diagnose the repeated vertical workspace and sidebar rendering shown in the reported production preview.
+- [x] Repair the app shell so the authenticated dashboard mounts once and preserves stable responsive height and overflow behavior.
+- [x] Verify the repaired authenticated workspace at desktop and mobile viewport sizes and prepare a recovery checkpoint.
+- [x] Add smooth mobile top-navigation dropdown motion, hover states, focus states, and reduced-motion handling.
+- [x] Add a query-backed Recent Activities widget for student and teacher dashboard experiences.
+- [x] Improve dashboard interaction hierarchy, empty states, and responsive micro-interactions without changing role-security behavior.
+- [x] Validate the enhanced dashboard at desktop and mobile sizes and prepare a stable checkpoint.
+- [x] Add an unread-notification count badge and a role-safe latest-notifications dropdown from the workspace header.
+- [x] Add a query-backed visual course-completion and performance-progress graph to the student dashboard.
+- [x] Add teacher Recent Activities filters for class/course and subject context without exposing other schools’ data.
+- [x] Validate the notification, progress, and filtered-activity enhancements at desktop and mobile sizes and prepare a stable checkpoint.
+- [x] Add a real weekly student learning and assessment-performance trend view from persisted activity and attempt timestamps.
+- [x] Add teacher Recent Activities start-date and end-date filtering with server-side date validation.
+- [x] Add persistent user notification preferences and respect applicable alert settings when staff notifications are created.
+- [x] Validate weekly trends, date filtering, and notification preferences at desktop and mobile sizes, then save a stable checkpoint.
+- [x] Add a Clear filters action that resets every teacher Recent Activities filter, including start and end dates.
+- [x] Add accessible hover and keyboard tooltips that show detailed real per-week lesson and assessment statistics in the student trend chart.
+- [x] Add persistent user controls for saved email and push delivery preferences plus scheduled in-app learning reminder configuration.
+- [x] Implement and validate the server-side scheduled in-app reminder workflow using the platform-supported scheduling mechanism.
+- [x] Validate the enhanced controls at desktop and mobile sizes, then save a stable checkpoint.
+- [x] Defer production-only reminder activation and managed execution inspection at the user’s request; the deployed-release guard remains in place for future activation.
+- [x] Add a persisted local timezone selector for scheduled notification reminders and derive reminder timing safely from the chosen timezone.
+- [x] Add active-filter count chips next to the teacher Recent Activities Clear filters action.
+- [x] Add real previous-week lesson and performance comparisons to student weekly trend tooltips.
+- [x] Validate timezone, filter-chip, and trend-comparison refinements, then save a stable checkpoint.
+- [x] Add a searchable timezone selector that makes locally relevant IANA timezones easy to find and select.
+- [x] Add persistent, user-owned teacher Recent Activities filter presets with save, apply, and delete controls.
+- [x] Add 4-week, 8-week, and 12-week selectable real-data ranges to the student trend chart.
+- [x] Validate timezone search, filter presets, and selectable trend ranges, then save a stable checkpoint.
+- [x] Let teachers mark one personal activity filter preset as the default view applied upon dashboard load.
+- [x] Add a CSV download for the currently selected real student trend-chart range.
+- [x] Add school-scoped teacher preset templates with secure share, discover, copy, and revoke flows.
+- [x] Validate default presets, CSV export, shared template permissions, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add persisted, searchable shared-template tags with controlled teacher authoring and school-scoped discovery.
+- [x] Add a user-owned CSV trend export history that records each downloaded range and remains available on later visits.
+- [x] Add a Reset to System Default action that clears a teacher’s custom default dashboard preset.
+- [x] Validate shared-template search and tags, export history, default reset, permissions, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add user-owned favorites for shared preset templates with secure toggle and fast favorites-only discovery.
+- [x] Add date and selected-range filters to the stored student CSV trend export history.
+- [x] Add cursor-based paginated retrieval and a Load more control for large CSV export histories.
+- [x] Validate favorites, export-history filters and pagination, permissions, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add user-owned custom folders for categorizing favorite shared templates, with safe assignment and deletion behavior.
+- [x] Add user-owned bulk archive and delete controls for filtered CSV export-history records.
+- [x] Extend student trend CSV exports with a real course-level lesson-completion and assessment-performance breakdown.
+- [x] Validate folders, bulk export management, course CSV detail, ownership boundaries, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add real per-assessment score, maximum-points, percentage, course, and submission-date rows to detailed student CSV exports.
+- [x] Add persisted drag-and-drop ordering for user-owned favorite template folders.
+- [x] Add a user-owned restore action for archived CSV export history records.
+- [x] Validate assessment-report detail, folder reordering, archive restoration, user ownership, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add teacher feedback to each real per-assessment row in detailed student CSV exports.
+- [x] Add persisted, accessible custom color labels for user-owned favorite folders.
+- [x] Add user-configurable archived export retention settings and a publish-ready daily background cleanup with safe user ownership boundaries.
+- [x] Validate feedback exports, folder colors, retention behavior, ownership, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Defer post-publish daily retention activation and first managed cleanup inspection at the user’s request; the publish-ready guard remains in place for later activation.
+- [x] Add persisted, student-owned run-history records for daily archived export cleanup executions and a dedicated history screen.
+- [x] Add folder-color filtering for shared template discovery while preserving school and favorite ownership boundaries.
+- [x] Add student assessment feedback analytics that visualizes real teacher comment activity over time.
+- [x] Validate cleanup instrumentation, color filtering, feedback analytics, ownership boundaries, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add a real student learning-focus panel that surfaces the next unfinished lesson, upcoming assignment, and recent teacher feedback.
+- [x] Add a teacher learner-attention panel that highlights pending grading and learners requiring progress follow-up from persisted records.
+- [x] Add role-aware quick actions that provide direct, contextual paths into high-value learning and teaching workflows.
+- [x] Refine the new panels for mobile responsiveness, accessible status communication, loading/empty states, and resilient actions.
+- [x] Validate the enhancement release with protected endpoint coverage, TypeScript, tests, production build, responsive checks, and a stable checkpoint.
+- [x] Add persistent, student-owned daily learning streak records and calculate current and longest streaks from verified learning activity.
+- [x] Add real student achievement milestones for learning consistency, completed lessons, submitted work, and assessment feedback engagement.
+- [x] Add a teacher one-click bulk reminder workflow that safely targets only course-owned learners with pending work or low lesson progress.
+- [x] Add an administrator-only school-wide intervention view for overdue work, low progress, pending grading, and performance indicators.
+- [x] Add downloadable, administrator-owned intervention analytics reports stored through managed file storage.
+- [x] Validate migrations, role boundaries, export ownership, TypeScript, tests, production build, and responsive dashboard behavior, then save a stable checkpoint.
+- [x] Add visually distinct, data-driven badge treatments for unlocked student milestones.
+- [x] Add student-owned downloadable achievement certificates for eligible unlocked milestones using managed storage.
+- [x] Add a validated optional personalized note field to teacher bulk reminders while preserving target and preference boundaries.
+- [x] Add administrator-only course and grade filters to intervention analytics and downloadable reports.
+- [x] Add real month-over-month intervention trend charts from persisted task, progress, grading, and assessment data.
+- [x] Validate certificates, reminder input safety, filtered analytics, export scope, permissions, TypeScript, tests, production build, and responsive behavior, then save a stable checkpoint.
+- [x] Add tamper-resistant verification tokens and QR codes to newly issued student achievement certificates.
+- [x] Add a public, privacy-minimized certificate verification page backed by valid stored certificate records.
+- [x] Add teacher-owned reusable personalized bulk-reminder templates with create, apply, and delete workflows.
+- [x] Add custom date range controls and two-cohort comparison to administrator intervention trends and CSV exports.
+- [x] Validate QR verification, template ownership, cohort report scope, permissions, migrations, TypeScript, tests, build, and responsive behavior, then save a stable checkpoint.
+- [x] Add durable certificate revocation metadata and an authorized revocation action for student-owned achievement certificates.
+- [x] Surface a privacy-safe revoked status in public certificate verification and prevent revoked certificates from being presented as valid.
+- [x] Add teacher-controlled sharing of personal reminder templates to a school-wide library with copy-to-personal workflow and ownership boundaries.
+- [x] Add a percentage-normalized mode to administrator cohort comparison charts while preserving raw-count analysis and filter scope.
+- [x] Validate revocation, shared-template ownership, normalized calculations, permissions, migrations, TypeScript, tests, production build, and responsive behavior, then save a stable checkpoint.
+- [x] Complete the administrator-only certificate revocation audit dashboard with school-scoped filters, immutable event context, and safe management actions.
+- [x] Add a pending-review and approval state to shared reminder templates so only approved templates appear in the school-wide teacher library.
+- [x] Add administrator controls to approve or reject shared reminder template submissions with an auditable review decision.
+- [x] Add administrator-owned saved cohort comparison views with create, apply, delete, and strict school/owner boundaries.
+- [x] Validate audit access, approval lifecycle, saved-view ownership, migrations, permissions, TypeScript, tests, production build, and responsive behavior, then save a stable checkpoint.
+- [x] Add an administrator-only certificate revocation CSV export that preserves school scope and immutable audit context.
+- [x] Add in-app notifications for teachers when a submitted reminder template is approved or rejected, with safe review-detail links.
+- [x] Add secure, revocable, read-only share links for administrator-owned saved intervention comparison views.
+- [x] Add a read-only shared comparison view experience that respects active-school and administrator access boundaries.
+- [x] Validate export ownership, approval notifications, share-link revocation, role access, migrations, TypeScript, tests, production build, and responsive behavior, then save a stable checkpoint.
+- [x] Add optional expiry and password protection to secure administrator comparison view links with safe server-side verification.
+- [x] Require a meaningful reviewer comment when an administrator rejects a reminder template and include it in the teacher notification.
+- [x] Add administrator-managed monthly certificate revocation audit reporting settings, designated recipients, and durable delivery history.
+- [x] Implement scheduled monthly audit reports through in-app notifications and secure download links, with production-only activation safeguards.
+- [x] Validate password and expiry protection, rejection feedback, monthly report ownership/delivery, scheduling, TypeScript, tests, build, and responsive behavior, then save a stable checkpoint.
+- [x] Defer production activation at the user’s request; after publishing this checkpoint, enable monthly delivery from the administrator settings card to create the production-managed schedule and inspect its first run.
+- [x] Verify rejected-template notifications include the administrator review comment and cover the contract with an automated test.
+- [x] Perform authenticated administrator desktop and mobile checks of protected sharing, review feedback, and monthly audit settings before checkpointing.
+- [x] Document authenticated administrator desktop and mobile verification evidence for the protected sharing, rejection-feedback, and monthly audit settings panels.
+- [x] Execute a real-data administrator acceptance test using a saved comparison view and a submitted reminder template, then clean up only the temporary acceptance records.
+- [x] Add a clear submitting-state animation and success feedback when an administrator rejects a reminder template with mandatory feedback.
+- [x] Add a one-click quick-copy control and password visibility toggle to the protected comparison link interface.
+- [x] Validate the refined administrator workflows with TypeScript, tests, production build, responsive checks, and a new checkpoint.
+- [x] Capture and document authenticated administrator desktop and mobile evidence for the refined link controls and rejection-feedback state.
+- [x] Save a post-refinement checkpoint containing the validated acceptance test and interaction updates.
+- [x] Add a teacher-owned rejection-feedback history panel with status, feedback text, reviewer context, and review date.
+- [x] Add an administrator sharing-activity audit screen for saved comparison views with owner, lifecycle event, protection state, and timestamp filters.
+- [x] Add administrator-managed monthly automation to review active published comparison links and notify selected administrators of expiring, protected, or recently shared views.
+- [x] Validate feedback history ownership, sharing audit scope, monthly review scheduling, TypeScript, tests, build, responsive behavior, and checkpoint the release.
+- [x] Save the validated teacher feedback history, sharing audit, and monthly comparison review automation release checkpoint.
+- [x] Add a direct teacher resubmit shortcut from rejection-feedback history that applies the saved template context and re-enters administrator review through the existing workflow.
+- [x] Add audit-dashboard statistics for active shared comparisons, lifecycle events, password protection, expiry posture, and automatic revocations.
+- [x] Add a school-scoped CSV export for filtered saved-comparison sharing audit data with safe managed download delivery.
+- [x] Validate direct resubmission, audit reporting and export ownership, TypeScript, tests, build, responsive behavior, and checkpoint the release.
+- [x] Save the validated teacher resubmission and comparison-sharing reporting enhancement release checkpoint.
+- [x] Add audit date-range presets for common sharing-statistics periods while retaining custom date filtering.
+- [x] Add an administrator-only download history panel for managed comparison-sharing CSV exports, with secure retrieval of completed reports.
+- [x] Defer production-only monthly published-comparison review activation at the user’s request to keep the project unpublished and private.
+- [x] Validate date presets, report history ownership, monthly review activation readiness, TypeScript, tests, build, and responsive behavior.
+- [x] Save the validated audit preset and comparison-sharing download history release checkpoint before production activation.
+- [ ] Push the final validated project checkpoint to the user-approved public GitHub repository after GitHub access is enabled: https://github.com/Aviraltrivedi7/Educonnect.

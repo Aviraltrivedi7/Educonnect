@@ -1,0 +1,38 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { trpc } from "@/lib/trpc";
+import { Copy, Eye, EyeOff, KeyRound, Link2, Loader2, LockKeyhole, Share2, Unlink } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import AdminMonthlyCertificateAuditReportSettings from "./AdminMonthlyCertificateAuditReportSettings";
+
+export default function AdminComparisonSharePanel() {
+  const utils = trpc.useUtils();
+  const views = trpc.workspace.adminInterventionComparisonViews.useQuery();
+  const [selectedId, setSelectedId] = useState("none");
+  const [expiry, setExpiry] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const selected = useMemo(() => views.data?.find(view => String(view.id) === selectedId), [views.data, selectedId]);
+  const existingUrl = selected?.shareToken ? new URL(`/shared/comparison/${selected.shareToken}`, window.location.origin).toString() : "";
+  const activeUrl = shareUrl || existingUrl;
+  const share = trpc.workspace.setAdminInterventionComparisonViewSharing.useMutation({
+    onSuccess: result => {
+      utils.workspace.adminInterventionComparisonViews.invalidate();
+      if (!result.shareToken) { setShareUrl(""); toast.success("Shared comparison link revoked."); return; }
+      const url = new URL(`/shared/comparison/${result.shareToken}`, window.location.origin).toString();
+      setShareUrl(url);
+      navigator.clipboard?.writeText(url).then(() => toast.success("Protected read-only link created and copied."), () => toast.success("Protected read-only link created."));
+      setPassword(""); setPasswordVisible(false);
+    },
+    onError: error => toast.error(error.message),
+  });
+  const copy = async () => { if (!activeUrl) return; try { await navigator.clipboard.writeText(activeUrl); toast.success("Link copied to clipboard."); } catch { toast.error("Copy the link manually from the field."); } };
+  const createLink = () => { if (!selected) return; if (password && password.length < 8) { toast.error("Password must contain at least 8 characters."); return; } share.mutate({ viewId: selected.id, share: true, expiresAt: expiry ? new Date(`${expiry}T23:59:59.999Z`) : undefined, password: password || undefined }); };
+  return <section className="space-y-4"><Card className="border-[#d9e3f3] bg-[linear-gradient(135deg,#f6f9ff_0%,#ffffff_75%)]"><CardHeader className="border-b border-[#e6ecf6]"><div className="flex items-start justify-between gap-3"><div><div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#e9effc] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.12em] text-[#4d6e9b]"><Share2 className="size-3" />Administrator collaboration</div><CardTitle className="text-lg">Protected comparison links</CardTitle><CardDescription>Share a saved cohort comparison with same-school administrators. Each recipient must sign in; expiry and password are optional extra protections.</CardDescription></div><span className="grid size-10 place-items-center rounded-2xl bg-[#e6edfc] text-[#4f72a2]"><Link2 className="size-5" /></span></div></CardHeader><CardContent className="space-y-3 pt-4"><Select value={selectedId} onValueChange={value => { setSelectedId(value); setShareUrl(""); setPassword(""); setPasswordVisible(false); const view = views.data?.find(item => String(item.id) === value); setExpiry(view?.shareExpiresAt ? new Date(view.shareExpiresAt).toISOString().slice(0, 10) : ""); }}><SelectTrigger className="border-[#d4e0f1] bg-white"><SelectValue placeholder="Choose saved view" /></SelectTrigger><SelectContent><SelectItem value="none">Choose a saved comparison view</SelectItem>{views.data?.map(view => <SelectItem key={view.id} value={String(view.id)}>{view.name}{view.shareToken ? " · Link active" : ""}</SelectItem>)}</SelectContent></Select>{selected ? <><div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="comparison-share-expiry" className="text-xs text-[#5f738d]">Optional expiry date</Label><Input id="comparison-share-expiry" type="date" min={new Date().toISOString().slice(0, 10)} value={expiry} onChange={event => setExpiry(event.target.value)} className="border-[#d4e0f1] bg-white" /></div><div className="space-y-1.5"><Label htmlFor="comparison-share-password" className="text-xs text-[#5f738d]">Optional password</Label><div className="relative"><KeyRound className="pointer-events-none absolute left-3 top-3 size-4 text-[#7891b1]" /><Input id="comparison-share-password" type={passwordVisible ? "text" : "password"} minLength={8} maxLength={128} value={password} onChange={event => setPassword(event.target.value)} placeholder={selected.passwordProtected ? "Set a replacement password" : "At least 8 characters"} className="border-[#d4e0f1] bg-white pl-9 pr-10" /><button type="button" aria-label={passwordVisible ? "Hide share password" : "Show share password"} aria-pressed={passwordVisible} className="absolute right-2 top-2 grid size-7 place-items-center rounded-md text-[#6f87a5] transition-colors hover:bg-[#edf3fb] hover:text-[#456a9d] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7195c5]" onClick={() => setPasswordVisible(value => !value)}>{passwordVisible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button></div></div></div><div className="flex flex-wrap items-center gap-2"><Badge className={selected.shareToken ? "bg-[#e8f3e7] text-[#3d7751]" : "bg-[#edf1f8] text-[#526e93]"}>{selected.shareToken ? "Link active" : "Private"}</Badge>{selected.shareToken && selected.shareExpiresAt ? <Badge className="bg-[#fff3dc] text-[#986821]">Expires {new Date(selected.shareExpiresAt).toLocaleDateString()}</Badge> : null}{selected.passwordProtected ? <Badge className="bg-[#eee8fb] text-[#62518f]"><LockKeyhole className="mr-1 size-3" />Password protected</Badge> : null}</div><div className="flex flex-wrap gap-2"><Button disabled={share.isPending} className="bg-[#5376a5] text-white hover:bg-[#45658f]" onClick={createLink}>{share.isPending ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <Share2 className="mr-1.5 size-4" />}{selected.shareToken ? "Replace link" : "Create link"}</Button>{selected.shareToken ? <Button variant="outline" disabled={share.isPending} className="border-[#ecd2cb] text-[#a4513c]" onClick={() => share.mutate({ viewId: selected.id, share: false })}><Unlink className="mr-1.5 size-4" />Revoke link</Button> : null}{activeUrl ? <Button variant="outline" className="border-[#cbdaf0] text-[#4b6e9d]" onClick={copy}><Copy className="mr-1.5 size-4" />Copy link</Button> : null}</div>{activeUrl ? <div className="flex items-center gap-2 rounded-lg border border-[#d4e0f1] bg-white p-1.5"><Input readOnly value={activeUrl} aria-label="Protected read-only comparison link" className="h-8 border-0 bg-transparent px-2 text-xs shadow-none focus-visible:ring-0" /><Button size="icon" variant="outline" className="size-8 shrink-0 border-[#bfd0ea] text-[#486b9c]" onClick={copy} aria-label="Quick copy protected comparison link" title="Copy link"><Copy className="size-3.5" /></Button></div> : null}</> : null}</CardContent></Card><AdminMonthlyCertificateAuditReportSettings /></section>;
+}

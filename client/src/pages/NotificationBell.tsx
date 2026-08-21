@@ -1,0 +1,21 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { Bell, CheckCheck, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import NotificationPreferences from "./NotificationPreferences";
+
+export default function NotificationBell() {
+  const [open, setOpen] = useState(false);
+  const utils = trpc.useUtils();
+  const inbox = trpc.notifications.inbox.useQuery(undefined, { refetchInterval: 60_000 });
+  const markRead = trpc.notifications.markRead.useMutation({ onSuccess: () => utils.notifications.inbox.invalidate() });
+  const notifications = inbox.data?.latest ?? [];
+  const unread = inbox.data?.unreadCount ?? 0;
+  const openNotification = (item: { id: number; href: string | null }) => {
+    if (!item.href || !item.href.startsWith("/app")) return;
+    markRead.mutate({ notificationId: item.id });
+    window.location.assign(item.href);
+  };
+  return <div className="relative"><button type="button" aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`} aria-expanded={open} aria-controls="notification-inbox" onClick={() => setOpen(value => !value)} className="relative grid size-10 place-items-center rounded-xl border border-[#ccd9cb] bg-white text-[#40534a] shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#9fb99f] hover:bg-[#f7fbf5] active:scale-[.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#82a589] motion-reduce:transition-none"><Bell className="size-4" />{unread ? <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-[#d95040] px-1 text-[10px] font-bold leading-5 text-white">{unread > 99 ? "99+" : unread}</span> : null}</button><div id="notification-inbox" className={`absolute right-0 top-12 z-[60] w-[min(22rem,calc(100vw-2.5rem))] origin-top-right overflow-hidden rounded-2xl border border-[#d8e3d7] bg-white shadow-[0_20px_48px_rgba(36,57,44,.18)] transition-all duration-200 ease-[cubic-bezier(.23,1,.32,1)] motion-reduce:transition-none ${open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none -translate-y-2 scale-[.97] opacity-0"}`}><div className="flex items-center justify-between border-b border-[#edf0eb] px-4 py-3"><div><strong className="text-sm">Notifications</strong><p className="mt-0.5 text-xs text-[#718077]">Latest school updates</p></div>{unread ? <Badge className="bg-[#fde6e0] text-[#c84536] hover:bg-[#fde6e0]">{unread} unread</Badge> : <CheckCheck className="size-4 text-[#4b9869]" />}</div><div className="max-h-80 overflow-y-auto">{inbox.isLoading ? <div className="space-y-3 p-4"><div className="h-12 animate-pulse rounded-xl bg-[#f1f4f0]" /><div className="h-12 animate-pulse rounded-xl bg-[#f1f4f0]" /></div> : notifications.length ? notifications.map(item => <button key={item.id} onClick={() => openNotification(item)} className={`group flex w-full gap-3 border-b border-[#edf0eb] px-4 py-3 text-left transition-colors hover:bg-[#f7faf5] ${item.readAt ? "" : "bg-[#f1f8ef]"}`}><span className={`mt-1.5 size-2 shrink-0 rounded-full ${item.readAt ? "bg-[#d8e2d7]" : "bg-[#d95040]"}`} /><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{item.title}</strong><span className="mt-1 line-clamp-2 block text-xs leading-5 text-[#718077]">{item.body}</span><span className="mt-1 block text-[11px] text-[#94a097]">{new Date(item.createdAt).toLocaleString()}</span></span>{item.href?.startsWith("/app") ? <ExternalLink className="mt-1 size-3.5 shrink-0 text-[#71917a] opacity-0 transition-opacity group-hover:opacity-100" /> : null}</button>) : <div className="px-6 py-9 text-center"><Bell className="mx-auto size-5 text-[#82a589]" /><strong className="mt-3 block text-sm">You are all caught up</strong><p className="mt-1 text-xs leading-5 text-[#718077]">New grades, feedback and school updates will appear here.</p></div>}</div><div className="flex items-center justify-between border-t border-[#edf0eb] px-2 py-2"><NotificationPreferences /><Button variant="ghost" size="sm" className="text-xs text-[#4d7560] hover:bg-[#f1f8ef]" onClick={() => { setOpen(false); window.location.assign("/app#messages"); }}>Open centre</Button></div></div></div>;
+}

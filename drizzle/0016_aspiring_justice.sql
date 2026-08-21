@@ -1,0 +1,1 @@
+ALTER TABLE `activityFilterPresetFavoriteFolders` ADD `position` int DEFAULT 0 NOT NULL;

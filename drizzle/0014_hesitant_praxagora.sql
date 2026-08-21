@@ -1,0 +1,1 @@
+CREATE INDEX `trend_export_user_id_idx` ON `trendExportDownloads` (`userId`,`id`);

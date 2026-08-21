@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-serif: "DM Serif Display", Georgia, serif;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --radius: 0.78rem;
+  --background: oklch(0.972 0.012 130);
+  --foreground: oklch(0.205 0.022 155);
+  --card: oklch(0.996 0.004 105);
+  --card-foreground: oklch(0.205 0.022 155);
+  --popover: oklch(0.996 0.004 105);
+  --popover-foreground: oklch(0.205 0.022 155);
+  --primary: oklch(0.255 0.028 155);
+  --primary-foreground: oklch(0.982 0.014 125);
+  --secondary: oklch(0.932 0.025 136);
+  --secondary-foreground: oklch(0.31 0.03 155);
+  --muted: oklch(0.94 0.014 132);
+  --muted-foreground: oklch(0.49 0.025 154);
+  --accent: oklch(0.929 0.036 142);
+  --accent-foreground: oklch(0.27 0.04 154);
+  --destructive: oklch(0.61 0.19 28);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.89 0.016 135);
+  --input: oklch(0.89 0.016 135);
+  --ring: oklch(0.55 0.09 148);
+}
+
+@layer base {
+  * { @apply border-border outline-ring/50; }
+  body { @apply bg-background text-foreground font-sans; }
+  button:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href], input:not(:disabled), textarea:not(:disabled) { @apply cursor-pointer; }
+  ::selection { background: oklch(0.81 0.07 145); color: oklch(0.2 0.02 155); }
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
